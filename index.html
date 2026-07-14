@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Premium | Factory Management</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0f172a; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; display: none; } /* Initially hidden */
+        
+        /* Login Screen Styling */
+        .login-container { max-width: 400px; margin: 100px auto; background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; text-align: center; }
+        .login-container h2 { margin-bottom: 20px; color: #38bdf8; }
+        
+        header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e293b; padding-bottom: 20px; position: relative; }
+        h1 { color: #38bdf8; text-transform: uppercase; }
+        .logout-btn { position: absolute; right: 0; top: 10px; background: #ef4444; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold;}
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+        .card h3 { margin-bottom: 15px; color: #f1f5f9; border-bottom: 1px dashed #475569; padding-bottom: 5px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; color: #94a3b8; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; }
+        
+        .btn { background: #0ea5e9; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
+        .btn:hover { background: #0284c7; }
+        
+        .status-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .status-table th, .status-table td { padding: 10px; border: 1px solid #334155; text-align: left; font-size: 14px; }
+        .status-table th { background: #334155; color: #38bdf8; }
+        
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-cutting { background: #ef4444; color: white; }
+        .badge-stock { background: #f59e0b; color: white; }
+        .badge-finished { background: #10b981; color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SECURE LOGIN SCREEN -->
+    <div class="login-container" id="login-box">
+        <h2>🏭 Factory Login</h2>
+        <div class="form-group">
+            <input type="email" id="login-email" placeholder="Admin Email ID">
+        </div>
+        <div class="form-group">
+            <input type="password" id="login-pass" placeholder="Password">
+        </div>
+        <button class="btn" onclick="loginAdmin()">Sign In</button>
+    </div>
+
+    <!-- 2. MAIN SYSTEM CONTENT -->
+    <div class="container" id="main-system">
+        <header>
+            <h1>🏭 Prince Premium</h1>
+            <p style="color: #94a3b8;">Internal Factory & Stock Dashboard</p>
+            <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
+        </header>
+
+        <div class="grid">
+            <!-- Form Card -->
+            <div class="card">
+                <h3>➕ Add New Production Entry</h3>
+                <div class="form-group">
+                    <label>Select Stage:</label>
+                    <select id="prod-stage">
+                        <option value="Cutting">Fabric Cutting (कपड़ा कटिंग)</option>
+                        <option value="In-Progress">In Production / Stock (सिलाई/स्टॉक)</option>
+                        <option value="Finished">Finished Goods / Ready Mall (तैयार माल)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Item Name:</label>
+                    <input type="text" id="prod-item" placeholder="e.g. Black Hoodie XL">
+                </div>
+                <div class="form-group">
+                    <label>Quantity (Pcs):</label>
+                    <input type="number" id="prod-qty" placeholder="Enter quantity">
+                </div>
+                <button type="button" class="btn" onclick="addProductionLog()">Save Entry</button>
+            </div>
+
+            <!-- Live Status Card -->
+            <div class="card">
+                <h3>📊 Live Factory Status</h3>
+                <div style="overflow-x: auto;">
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Stage</th>
+                                <th>Qty (Pcs)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="live-stock-rows">
+                            <!-- Live Streaming -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Copy/Paste your exact Firebase Config here
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // Monitor Auth State (Check user logged in or out)
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById("login-box").style.display = "none";
+            document.getElementById("main-system").style.display = "block";
+            loadLiveFactoryData(); // Load data only when authenticated
+        } else {
+            document.getElementById("login-box").style.display = "block";
+            document.getElementById("main-system").style.display = "none";
+        }
+    });
+
+    // Login Function
+    function loginAdmin() {
+        const email = document.getElementById("login-email").value;
+        const pass = document.getElementById("login-pass").value;
+        
+        auth.signInWithEmailAndPassword(email, pass).catch(err => {
+            alert("Login Failed: " + err.message);
+        });
+    }
+
+    // Logout Function
+    function logoutAdmin() {
+        auth.signOut();
+    }
+
+    // Save Data
+    function addProductionLog() {
+        const stage = document.getElementById("prod-stage").value;
+        const item = document.getElementById("prod-item").value.trim();
+        const qty = document.getElementById("prod-qty").value;
+
+        if(!item || !qty) { alert("Details sahi se bharein!"); return; }
+
+        db.ref('factory_management/logs').push({
+            itemName: item,
+            stage: stage,
+            quantity: parseInt(qty),
+            timestamp: Date.now()
+        }).then(() => {
+            alert("Entry saved successfully!");
+            document.getElementById("prod-item").value = "";
+            document.getElementById("prod-qty").value = "";
+        });
+    }
+
+    // Load Data Stream
+    function loadLiveFactoryData() {
+        db.ref('factory_management/logs').on('value', (snapshot) => {
+            const tbody = document.getElementById("live-stock-rows");
+            tbody.innerHTML = "";
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(entry => {
+                    let badgeClass = entry.stage === "Cutting" ? "badge-cutting" : (entry.stage === "Finished" ? "badge-finished" : "badge-stock");
+                    tbody.innerHTML += `<tr>
+                        <td><strong>${entry.itemName}</strong></td>
+                        <td><span class="badge ${badgeClass}">${entry.stage}</span></td>
+                        <td>${entry.quantity} Pcs</td>
+                    </tr>`;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#64748b;">No factory records found.</td></tr>`;
+            }
+        });
+    }
+    </script>
+</body>
+</html>
