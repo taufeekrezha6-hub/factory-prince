@@ -267,7 +267,7 @@
     const db = firebase.database();
     const storage = firebase.storage();
 
-    // Auto Login on Refresh
+    // Auto Login Check
     window.onload = function() {
         if (localStorage.getItem("prince_logged_in") === "true") {
             document.getElementById("login-box").style.display = "none";
@@ -276,7 +276,6 @@
         }
     };
 
-    // Safe Mobile Navigation
     function switchTab(tabId, btn) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -325,7 +324,7 @@
             document.getElementById("raw-name").value = "";
             document.getElementById("raw-qty").value = "";
             document.getElementById("raw-vendor").value = "";
-        }).catch(err => alert("Error saving: " + err.message));
+        }).catch(err => alert("Error: " + err.message));
     }
 
     function saveProduction() {
@@ -410,7 +409,6 @@
         });
     }
 
-    // Real-time Data Fetch with Error Checking
     function loadAllFactoryData() {
         db.ref('factory_erp/raw_material').on('value', snapshot => {
             const tbody = document.getElementById("raw-stock-rows");
@@ -423,7 +421,7 @@
             } else {
                 tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#94a3b8;">No Material Stock Available</td></tr>`;
             }
-        }, err => { alert("Database Read Error: " + err.message); });
+        });
 
         db.ref('factory_erp/production').on('value', snapshot => {
             const tbody = document.getElementById("production-rows");
