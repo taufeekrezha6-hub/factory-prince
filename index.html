@@ -12,9 +12,8 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #0f172a; color: #e2e8f0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; display: none; } /* Initially hidden */
+        .container { max-width: 900px; margin: 0 auto; display: none; }
         
-        /* Login Screen Styling */
         .login-container { max-width: 400px; margin: 100px auto; background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; text-align: center; }
         .login-container h2 { margin-bottom: 20px; color: #38bdf8; }
         
@@ -47,7 +46,7 @@
 </head>
 <body>
 
-    <!-- 1. SECURE LOGIN SCREEN -->
+    <!-- 1. LOGIN SCREEN -->
     <div class="login-container" id="login-box">
         <h2>🏭 Factory Login</h2>
         <div class="form-group">
@@ -59,24 +58,24 @@
         <button class="btn" onclick="loginAdmin()">Sign In</button>
     </div>
 
-    <!-- 2. MAIN SYSTEM CONTENT -->
+    <!-- 2. MAIN CONTENT -->
     <div class="container" id="main-system">
         <header>
             <h1>🏭 Prince Premium</h1>
-            <p style="color: #94a3b8;">Internal Factory & Stock Dashboard</p>
+            <p style="color: #94a3b8;">Internal Factory Dashboard & Secret Alerts</p>
             <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
         </header>
 
         <div class="grid">
-            <!-- Form Card -->
+            <!-- Form -->
             <div class="card">
                 <h3>➕ Add New Production Entry</h3>
                 <div class="form-group">
                     <label>Select Stage:</label>
                     <select id="prod-stage">
-                        <option value="Cutting">Fabric Cutting (कपड़ा cuting)</option>
+                        <option value="Cutting">Fabric Cutting (कपड़ा कटिंग)</option>
                         <option value="In-Progress">In Production / Stock (सिलाई/स्टॉक)</option>
-                        <option value="Finished">Finished Goods / Ready Mall (تैयार माल)</option>
+                        <option value="Finished">Finished Goods / Ready Mall (तैयार माल)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -90,7 +89,7 @@
                 <button type="button" class="btn" onclick="addProductionLog()">Save Entry</button>
             </div>
 
-            <!-- Live Status Card -->
+            <!-- Live Table -->
             <div class="card">
                 <h3>📊 Live Factory Status</h3>
                 <div style="overflow-x: auto;">
@@ -103,7 +102,7 @@
                             </tr>
                         </thead>
                         <tbody id="live-stock-rows">
-                            <!-- Live Streaming -->
+                            <!-- Data -->
                         </tbody>
                     </table>
                 </div>
@@ -112,9 +111,12 @@
     </div>
 
     <script>
-    // Aapki real keys jo aapne screenshot me dikhayi hain:
+    // ⚙️ SECRET DISCORD ALERT CONFIGURATION (Aapki Real Link Added)
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1526795602166546515/leWqh_O7dCCQVnP2meakyGlT-1WU-x34fwOKHZMoPKSqOoqoGbztxjl4sCE7B_lT9etV"; 
+
+    // Firebase Config (Aapki original keys)
     const firebaseConfig = {
-        apiKey: "AIzaSyCnAObkRA9eYPw...", // Pure code me automatic fill ho gaya hai
+        apiKey: "AIzaSyCnAObkRA9eYPw...",
         authDomain: "prince-primium.firebaseapp.com",
         databaseURL: "https://prince-primium-default-rtdb.firebaseio.com",
         projectId: "prince-primium",
@@ -126,27 +128,48 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Login Function
     function loginAdmin() {
         const email = document.getElementById("login-email").value.trim();
         const pass = document.getElementById("login-pass").value;
-        
         if (email === "prince@gmail.com" && pass === "prince786") {
             document.getElementById("login-box").style.display = "none";
             document.getElementById("main-system").style.display = "block";
             loadLiveFactoryData();
-            alert("Welcome Taufeek Bhai! Login Successful.");
+            alert("Welcome! Login Successful.");
         } else {
-            alert("Galat Email ya Password! Dubara koshish karein.");
+            alert("Galat Details!");
         }
     }
 
-    // Logout Function
+    document.addEventListener("DOMContentLoaded", function() {
+        // Monitor any new data added secretly
+        let isInitialLoad = true;
+        db.ref('factory_management/logs').limitToLast(1).on('child_added', (snapshot) => {
+            if (isInitialLoad) {
+                isInitialLoad = false;
+                return;
+            }
+            const newEntry = snapshot.val();
+            sendDiscordAlert(newEntry.itemName, newEntry.stage, newEntry.quantity);
+        });
+    });
+
+    // Secret Background Notification Function for Discord
+    function sendDiscordAlert(item, stage, qty) {
+        const alertMsg = `⚠️ **PRINCE FACTORY ALERT** ⚠️\n\nDatabase me naya badlaav kiya gaya hai!\n📦 **Item:** ${item}\n🏭 **Stage:** ${stage}\n🔢 **Qty:** ${qty} Pcs`;
+        
+        fetch(DISCORD_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: alertMsg })
+        })
+        .then(() => console.log("Discord secret alert sent!"))
+        .catch(err => console.error("Discord Alert failed:", err));
+    }
+
     function logoutAdmin() {
         document.getElementById("login-box").style.display = "block";
         document.getElementById("main-system").style.display = "none";
-        document.getElementById("login-email").value = "";
-        document.getElementById("login-pass").value = "";
     }
 
     // Save Data
@@ -155,7 +178,7 @@
         const item = document.getElementById("prod-item").value.trim();
         const qty = document.getElementById("prod-qty").value;
 
-        if(!item || !qty) { alert("Details sahi se bharein!"); return; }
+        if(!item || !qty) { alert("Details check karein!"); return; }
 
         db.ref('factory_management/logs').push({
             itemName: item,
@@ -163,7 +186,7 @@
             quantity: parseInt(qty),
             timestamp: Date.now()
         }).then(() => {
-            alert("Entry saved successfully!");
+            alert("Entry saved in Database!");
             document.getElementById("prod-item").value = "";
             document.getElementById("prod-qty").value = "";
         });
@@ -175,6 +198,7 @@
             const tbody = document.getElementById("live-stock-rows");
             tbody.innerHTML = "";
             const data = snapshot.val();
+            
             if(data) {
                 Object.values(data).reverse().forEach(entry => {
                     let badgeClass = entry.stage === "Cutting" ? "badge-cutting" : (entry.stage === "Finished" ? "badge-finished" : "badge-stock");
@@ -185,7 +209,7 @@
                     </tr>`;
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#64748b;">No factory records found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No records.</td></tr>`;
             }
         });
     }
