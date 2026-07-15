@@ -3,95 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prince Premium | ERP & Manufacturing</title>
+    <title>Prince Premium | ERP & Manufacturing Management</title>
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script> <!-- Storage SDK added -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <style>
-        /* ... (Existing CSS remains same) ... */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #0f172a; color: #e2e8f0; padding: 20px; }
         .container { max-width: 1300px; margin: 0 auto; display: none; }
+        
         .login-container { max-width: 400px; margin: 100px auto; background: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155; text-align: center; }
+        .login-container h2 { margin-bottom: 20px; color: #38bdf8; }
+        
         header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e293b; padding-bottom: 20px; position: relative; }
+        h1 { color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; }
         .logout-btn { position: absolute; right: 0; top: 10px; background: #ef4444; color: white; padding: 6px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold;}
+        
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; overflow-x: auto; }
-        .tab-btn { background: #1e293b; color: #94a3b8; padding: 10px 20px; border: 1px solid #334155; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: #0ea5e9; color: white; }
+        .tab-btn { background: #1e293b; color: #94a3b8; padding: 10px 20px; border: 1px solid #334155; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        .tab-btn.active { background: #0ea5e9; color: white; border-color: #0ea5e9; }
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
         .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        .card { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; }
+        @media(max-width: 992px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; height: fit-content; }
+        .card h3 { margin-bottom: 20px; color: #f1f5f9; border-bottom: 1px dashed #475569; padding-bottom: 8px; font-size: 18px; }
+        
         .form-group { margin-bottom: 15px; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; }
-        .btn { background: #0ea5e9; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
-        .status-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .status-table th, .status-table td { padding: 12px; border: 1px solid #334155; text-align: left; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; color: #94a3b8; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 14px; }
+        
+        .btn { background: #0ea5e9; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px; }
+        .btn:hover { background: #0284c7; }
+        
+        .status-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #1e293b; }
+        .status-table th, .status-table td { padding: 12px; border: 1px solid #334155; text-align: left; font-size: 14px; }
+        .status-table th { background: #0f172a; color: #38bdf8; font-weight: 600; }
+        .status-table tr:hover { background: #24334d; }
+        
+        .badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .badge-raw { background: #6366f1; color: white; }
+        .badge-cutting { background: #ef4444; color: white; }
+        .badge-stitching { background: #f59e0b; color: white; }
+        .badge-finished { background: #10b981; color: white; }
+        
+        .bill-link { color: #38bdf8; text-decoration: none; font-weight: bold; }
+        .bill-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
+    <!-- 1. LOGIN SCREEN -->
     <div class="login-container" id="login-box">
-        <h2>🏭 Prince Factory Login</h2>
-        <div class="form-group"><input type="email" id="login-email" placeholder="Admin Email"></div>
-        <div class="form-group"><input type="password" id="login-pass" placeholder="Password"></div>
+        <h2>🏭 Prince Factory ERP</h2>
+        <div class="form-group">
+            <input type="email" id="login-email" placeholder="Admin Email ID">
+        </div>
+        <div class="form-group">
+            <input type="password" id="login-pass" placeholder="Password">
+        </div>
         <button class="btn" onclick="loginAdmin()">Sign In</button>
     </div>
 
+    <!-- 2. MAIN CONTENT -->
     <div class="container" id="main-system">
         <header>
             <h1>🏭 Prince Premium Manufacturing</h1>
+            <p style="color: #94a3b8; margin-top: 5px;">End-to-End Factory Management & Audit Controls</p>
             <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
         </header>
 
+        <!-- Menu Tabs -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('raw-material')">📦 Raw Material</button>
-            <button class="tab-btn" onclick="switchTab('receipts')">🧾 Bills/Receipts</button>
+            <button class="tab-btn active" onclick="switchTab('raw-material')">📦 Raw Material (कच्चा माल)</button>
+            <button class="tab-btn" onclick="switchTab('production')">⚙️ Production Stages (काम ki स्थिति)</button>
+            <button class="tab-btn" onclick="switchTab('workers')">🪡 Karigar Khata (कारीगर हिसाब)</button>
+            <button class="tab-btn" onclick="switchTab('orders')">📜 Client Orders (पार्टी आर्डर)</button>
+            <button class="tab-btn" onclick="switchTab('receipts')">🧾 Rasid / Bills (बिल अपलोड)</button>
         </div>
 
-        <!-- TAB: RAW MATERIAL -->
+        <!-- TAB 1: RAW MATERIAL -->
         <div id="raw-material" class="tab-content active">
-            <!-- (Same as before) -->
-            <div class="card">
-                <h3>➕ Add Material</h3>
-                <input type="text" id="raw-name" placeholder="Material Name" style="margin-bottom:10px; width:100%; padding:10px;">
-                <button class="btn" onclick="saveRawMaterial()">Add</button>
+            <div class="grid">
+                <div class="card">
+                    <h3>➕ Inward Raw Material</h3>
+                    <div class="form-group">
+                        <label>Material Name (Fabric/Button etc):</label>
+                        <input type="text" id="raw-name" placeholder="e.g. Cotton Fleece Black">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity / Meters:</label>
+                        <input type="number" id="raw-qty" placeholder="e.g. 500">
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier/Vendor Name:</label>
+                        <input type="text" id="raw-vendor" placeholder="e.g. SK Fabrics Ahmedabad">
+                    </div>
+                    <button class="btn" onclick="saveRawMaterial()">Add Material</button>
+                </div>
+                <div class="card">
+                    <h3>📊 Current Raw Material Stock</h3>
+                    <table class="status-table">
+                        <thead>
+                            <tr><th>Material</th><th>Qty Available</th><th>Supplier</th></tr>
+                        </thead>
+                        <tbody id="raw-stock-rows"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- TAB: RECEIPT UPLOAD (New) -->
-        <div id="receipts" class="tab-content">
-            <div class="card">
-                <h3>🧾 Upload Purchase Bill / Receipt</h3>
-                <div class="form-group">
-                    <label>Bill Description:</label>
-                    <input type="text" id="bill-desc" placeholder="e.g. Fabric Bill - Oct 2025">
+        <!-- TAB 2: PRODUCTION STAGES -->
+        <div id="production" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>🔄 Move Production Stage</h3>
+                    <div class="form-group">
+                        <label>Lot/Item Name:</label>
+                        <input type="text" id="prod-item" placeholder="e.g. Premium Hoodie XL">
+                    </div>
+                    <div class="form-group">
+                        <label>Current Status/Stage:</label>
+                        <select id="prod-stage">
+                            <option value="Cutting">Fabric Cutting (कटिंग)</option>
+                            <option value="Stitching">Stitching / In Production (सिलाई)</option>
+                            <option value="Finishing">Finishing & Packing (चेकिंग/पैकिंग)</option>
+                            <option value="Finished">Ready Goods (तैयार माल)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity (Pcs):</label>
+                        <input type="number" id="prod-qty" placeholder="e.g. 200">
+                    </div>
+                    <button class="btn" onclick="saveProduction()">Update Production</button>
                 </div>
-                <div class="form-group">
-                    <input type="file" id="bill-file" accept="image/*">
+                <div class="card">
+                    <h3>📊 Live Floor Production Status</h3>
+                    <table class="status-table">
+                        <thead>
+                            <tr><th>Lot/Item</th><th>Stage</th><th>Pcs</th></tr>
+                        </thead>
+                        <tbody id="production-rows"></tbody>
+                    </table>
                 </div>
-                <button class="btn" onclick="uploadReceipt()">Upload & Save Receipt</button>
-                <div id="upload-status" style="margin-top:10px; color:#38bdf8;"></div>
             </div>
-            <div class="card" style="margin-top:20px;">
-                <h3>📜 Uploaded Bills</h3>
-                <table class="status-table" id="receipt-table">
-                    <thead><tr><th>Description</th><th>View Bill</th></tr></thead>
-                    <tbody id="receipt-rows"></tbody>
-                </table>
+        </div>
+
+        <!-- TAB 3: WORKERS KHATA -->
+        <div id="workers" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>✍️ Karigar Work & Rate Log</h3>
+                    <div class="form-group">
+                        <label>Karigar Name:</label>
+                        <input type="text" id="worker-name" placeholder="e.g. Aslam Ansari">
+                    </div>
+                    <div class="form-group">
+                        <label>Work Done (Item/Operation):</label>
+                        <input type="text" id="worker-task" placeholder="e.g. Sleeve Stitching">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Pieces Done:</label>
+                        <input type="number" id="worker-pcs" placeholder="e.g. 150">
+                    </div>
+                    <div class="form-group">
+                        <label>Rate Per Piece (₹):</label>
+                        <input type="number" id="worker-rate" placeholder="e.g. 15">
+                    </div>
+                    <button class="btn" onclick="saveWorkerLog()">Log Karigar Work</button>
+                </div>
+                <div class="card">
+                    <h3>🪡 Worker Ledger & Total Wages Due</h3>
+                    <table class="status-table">
+                        <thead>
+                            <tr><th>Karigar Name</th><th>Operation</th><th>Total Pcs</th><th>Rate</th><th>Total Due (₹)</th></tr>
+                        </thead>
+                        <tbody id="worker-rows"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: CLIENT ORDERS -->
+        <div id="orders" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>📦 New Party Order Book</h3>
+                    <div class="form-group">
+                        <label>Party/Client Name:</label>
+                        <input type="text" id="client-name" placeholder="e.g. Khan Clothing Delhi">
+                    </div>
+                    <div class="form-group">
+                        <label>Order Details (Items):</label>
+                        <textarea id="order-details" rows="2" placeholder="e.g. 500 Black Hoodies, 300 Red Sweatshirts"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Delivery Commitment Date:</label>
+                        <input type="date" id="order-date">
+                    </div>
+                    <button class="btn" onclick="saveClientOrder()">Book Order</button>
+                </div>
+                <div class="card">
+                    <h3>📜 Active Client Orders</h3>
+                    <table class="status-table">
+                        <thead>
+                            <tr><th>Client Name</th><th>Order Requirement</th><th>Deadline</th></tr>
+                        </thead>
+                        <tbody id="order-rows"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: RASID / BILL UPLOAD -->
+        <div id="receipts" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>🧾 Upload Purchase Bill / Rasid</h3>
+                    <div class="form-group">
+                        <label>Bill/Rasid Description:</label>
+                        <input type="text" id="bill-desc" placeholder="e.g. Zip Purchase Bill Ranchi">
+                    </div>
+                    <div class="form-group">
+                        <label>Select Bill Photo/File:</label>
+                        <input type="file" id="bill-file" accept="image/*">
+                    </div>
+                    <button class="btn" onclick="uploadReceipt()">Upload & Save Rasid</button>
+                    <div id="upload-status" style="margin-top: 10px; color: #38bdf8; font-weight: bold;"></div>
+                </div>
+                <div class="card">
+                    <h3>📜 All Uploaded Factory Bills</h3>
+                    <table class="status-table">
+                        <thead>
+                            <tr><th>Bill Description</th><th>View File</th></tr>
+                        </thead>
+                        <tbody id="receipt-rows"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1526795602166546515/leWqh_O7dCCQVnP2meakyGlT-1WU-x34fwOKHZMoPKSqOoqoGbztxjl4sCE7B_lT9etV";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCnAObkRA9eYPwpk44Q6YS5NY18lZUdAeM",
       authDomain: "prince-primium.firebaseapp.com",
       databaseURL: "https://prince-primium-default-rtdb.firebaseio.com",
       projectId: "prince-primium",
-      storageBucket: "prince-primium.appspot.com", // Ensure this matches your Firebase settings
+      storageBucket: "prince-primium.firebasestorage.app",
       messagingSenderId: "182442384742",
       appId: "1:182442384742:web:3dce7d5090e5d2d4e33ca7"
     };
@@ -100,55 +267,215 @@
     const db = firebase.database();
     const storage = firebase.storage();
 
-    function loginAdmin() {
-        const email = document.getElementById("login-email").value;
-        const pass = document.getElementById("login-pass").value;
-        if (email === "prince@gmail.com" && pass === "prince786") {
+    // 🌟 REFRESH CHECK: Agar browser me pehle se logged in hai to direct dashboard dikhao
+    window.onload = function() {
+        if (localStorage.getItem("prince_logged_in") === "true") {
             document.getElementById("login-box").style.display = "none";
             document.getElementById("main-system").style.display = "block";
-            loadReceipts();
-        } else { alert("Login Failed!"); }
-    }
-
-    function logoutAdmin() {
-        // SECURE LOGOUT: Clear memory and hide UI instantly
-        document.getElementById("main-system").style.display = "none";
-        document.getElementById("login-box").style.display = "block";
-        window.location.reload(); // Hard refresh to clear session
-    }
+            loadAllFactoryData();
+        }
+    };
 
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
         document.getElementById(tabId).classList.add('active');
+        if(event) event.currentTarget.classList.add('active');
     }
 
-    // Receipt Upload Logic
-    function uploadReceipt() {
-        const file = document.getElementById('bill-file').files[0];
-        const desc = document.getElementById('bill-desc').value;
-        if(!file || !desc) return alert("Select file and write description!");
+    function loginAdmin() {
+        const email = document.getElementById("login-email").value.trim();
+        const pass = document.getElementById("login-pass").value;
+        if (email === "prince@gmail.com" && pass === "prince786") {
+            // Memory me login state save karo
+            localStorage.setItem("prince_logged_in", "true");
+            
+            document.getElementById("login-box").style.display = "none";
+            document.getElementById("main-system").style.display = "block";
+            loadAllFactoryData();
+        } else {
+            alert("Galat Credentials!");
+        }
+    }
 
-        const storageRef = storage.ref('bills/' + Date.now() + '_' + file.name);
-        document.getElementById('upload-status').innerText = "Uploading...";
+    function logoutAdmin() {
+        // Safe Memory Wipe: Browser storage se status hatao
+        localStorage.removeItem("prince_logged_in");
+        document.getElementById("main-system").style.display = "none";
+        document.getElementById("login-box").style.display = "block";
+        window.location.reload(); 
+    }
+
+    // Save Handlers
+    function saveRawMaterial() {
+        const name = document.getElementById("raw-name").value.trim();
+        const qty = document.getElementById("raw-qty").value;
+        const vendor = document.getElementById("raw-vendor").value.trim();
         
-        storageRef.put(file).then(snapshot => {
-            snapshot.ref.getDownloadURL().then(url => {
-                db.ref('factory_erp/bills').push({ desc, url, timestamp: Date.now() });
-                document.getElementById('upload-status').innerText = "✅ Uploaded!";
-                document.getElementById('bill-desc').value = "";
-            });
+        if(!name || !qty) return alert("Pehle poori details fill karein!");
+
+        db.ref('factory_erp/raw_material').push({
+            name: name,
+            qty: parseInt(qty),
+            vendor: vendor,
+            timestamp: Date.now()
+        }).then(() => {
+            alert("Material Added Successfully!");
+            let alertMsg = `🚨 **PRINCE FACTORY SECURITY ALERT** 🚨\n\n📦 **Kacha Maal Entry:**\nMaterial: ${name}\nQty: ${qty} Units\nSupplier: ${vendor}`;
+            fetch(DISCORD_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: alertMsg }) });
+            
+            document.getElementById("raw-name").value = "";
+            document.getElementById("raw-qty").value = "";
+            document.getElementById("raw-vendor").value = "";
+        }).catch(err => alert("Error: " + err.message));
+    }
+
+    function saveProduction() {
+        const item = document.getElementById("prod-item").value.trim();
+        const stage = document.getElementById("prod-stage").value;
+        const qty = document.getElementById("prod-qty").value;
+        if(!item || !qty) return alert("Fill details");
+
+        db.ref('factory_erp/production').push({ item, stage, qty: parseInt(qty), timestamp: Date.now() })
+        .then(() => {
+            alert("Production Stage Updated!");
+            let alertMsg = `🚨 **PRINCE FACTORY SECURITY ALERT** 🚨\n\n⚙️ **Production Stage Change:**\nItem: ${item}\nStage: ${stage}\nQty: ${qty} Pcs`;
+            fetch(DISCORD_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: alertMsg }) });
+            
+            document.getElementById("prod-item").value = "";
+            document.getElementById("prod-qty").value = "";
         });
     }
 
-    function loadReceipts() {
+    function saveWorkerLog() {
+        const name = document.getElementById("worker-name").value.trim();
+        const task = document.getElementById("worker-task").value.trim();
+        const pcs = document.getElementById("worker-pcs").value;
+        const rate = document.getElementById("worker-rate").value;
+        if(!name || !pcs || !rate) return alert("Fill details");
+
+        db.ref('factory_erp/workers').push({ name, task, pcs: parseInt(pcs), rate: parseFloat(rate), timestamp: Date.now() })
+        .then(() => {
+            alert("Worker Ledger Logged!");
+            let alertMsg = `🚨 **PRINCE FACTORY SECURITY ALERT** 🚨\n\n🪡 **Karigar Hisab Update:**\nWorker: ${name}\nWork: ${task}\nTotal Amount: ₹${pcs * rate}`;
+            fetch(DISCORD_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: alertMsg }) });
+            
+            document.getElementById("worker-name").value = "";
+            document.getElementById("worker-task").value = "";
+            document.getElementById("worker-pcs").value = "";
+            document.getElementById("worker-rate").value = "";
+        });
+    }
+
+    function saveClientOrder() {
+        const client = document.getElementById("client-name").value.trim();
+        const details = document.getElementById("order-details").value.trim();
+        const date = document.getElementById("order-date").value;
+        if(!client || !details) return alert("Fill details");
+
+        db.ref('factory_erp/orders').push({ client, details, date, timestamp: Date.now() })
+        .then(() => {
+            alert("Order Booked!");
+            let alertMsg = `🚨 **PRINCE FACTORY SECURITY ALERT** 🚨\n\n📜 **Naya Party Order:**\nClient: ${client}\nDetails: ${details}`;
+            fetch(DISCORD_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: alertMsg }) });
+            
+            document.getElementById("client-name").value = "";
+            document.getElementById("order-details").value = "";
+            document.getElementById("order-date").value = "";
+        });
+    }
+
+    // Rasid / Bill Upload Logic
+    function uploadReceipt() {
+        const file = document.getElementById('bill-file').files[0];
+        const desc = document.getElementById('bill-desc').value.trim();
+        if(!file || !desc) return alert("Pehle photo select karein aur description likhein!");
+
+        const statusDiv = document.getElementById('upload-status');
+        statusDiv.innerText = "⏳ Uploading Bill, Please wait...";
+
+        const storageRef = storage.ref('factory_bills/' + Date.now() + '_' + file.name);
+        
+        storageRef.put(file).then(snapshot => {
+            snapshot.ref.getDownloadURL().then(url => {
+                db.ref('factory_erp/bills').push({
+                    desc: desc,
+                    url: url,
+                    timestamp: Date.now()
+                }).then(() => {
+                    statusDiv.innerText = "✅ Rasid Uploaded Successfully!";
+                    alert("Rasid Saved!");
+                    document.getElementById('bill-desc').value = "";
+                    document.getElementById('bill-file').value = "";
+                    setTimeout(() => { statusDiv.innerText = ""; }, 3000);
+                });
+            });
+        }).catch(err => {
+            statusDiv.innerText = "❌ Upload Failed!";
+            alert("Error: " + err.message);
+        });
+    }
+
+    // Real-time Data View Synchronizers
+    function loadAllFactoryData() {
+        db.ref('factory_erp/raw_material').on('value', snapshot => {
+            const tbody = document.getElementById("raw-stock-rows");
+            tbody.innerHTML = "";
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
+                    tbody.innerHTML += `<tr><td><strong>${d.name}</strong></td><td><span class="badge badge-raw">${d.qty} Units</span></td><td>${d.vendor || 'N/A'}</td></tr>`;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#94a3b8;">No Material Stock Available</td></tr>`;
+            }
+        });
+
+        db.ref('factory_erp/production').on('value', snapshot => {
+            const tbody = document.getElementById("production-rows");
+            tbody.innerHTML = "";
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
+                    let bc = d.stage==='Cutting'?'badge-cutting':(d.stage==='Finished'?'badge-finished':'badge-stitching');
+                    tbody.innerHTML += `<tr><td><strong>${d.item}</strong></td><td><span class="badge ${bc}">${d.stage}</span></td><td>${d.qty} Pcs</td></tr>`;
+                });
+            }
+        });
+
+        db.ref('factory_erp/workers').on('value', snapshot => {
+            const tbody = document.getElementById("worker-rows");
+            tbody.innerHTML = "";
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
+                    tbody.innerHTML += `<tr><td><strong>${d.name}</strong></td><td>${d.task}</td><td>${d.pcs}</td><td>₹${d.rate}</td><td><strong>₹${d.pcs * d.rate}</strong></td></tr>`;
+                });
+            }
+        });
+
+        db.ref('factory_erp/orders').on('value', snapshot => {
+            const tbody = document.getElementById("order-rows");
+            tbody.innerHTML = "";
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
+                    tbody.innerHTML += `<tr><td><strong>${d.client}</strong></td><td>${d.details}</td><td>${d.date || 'No Date'}</td></tr>`;
+                });
+            }
+        });
+
         db.ref('factory_erp/bills').on('value', snapshot => {
             const tbody = document.getElementById("receipt-rows");
             tbody.innerHTML = "";
             const data = snapshot.val();
             if(data) {
                 Object.values(data).reverse().forEach(d => {
-                    tbody.innerHTML += `<tr><td>${d.desc}</td><td><a href="${d.url}" target="_blank">View Bill</a></td></tr>`;
+                    tbody.innerHTML += `<tr><td><strong>${d.desc}</strong></td><td><a href="${d.url}" target="_blank" class="bill-link">👁️ View Rasid</a></td></tr>`;
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No Bills Uploaded Yet</td></tr>`;
             }
         });
     }
