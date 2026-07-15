@@ -21,7 +21,6 @@
         h1 { color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; }
         .logout-btn { position: absolute; right: 0; top: 10px; background: #ef4444; color: white; padding: 6px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold;}
         
-        /* Navigation Tabs */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; overflow-x: auto; }
         .tab-btn { background: #1e293b; color: #94a3b8; padding: 10px 20px; border: 1px solid #334155; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap; }
         .tab-btn.active { background: #0ea5e9; color: white; border-color: #0ea5e9; }
@@ -220,10 +219,9 @@
     </div>
 
     <script>
-    // ⚙️ DISCORD AUTO-ALERT CONFIGURATION
     const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1526795602166546515/leWqh_O7dCCQVnP2meakyGlT-1WU-x34fwOKHZMoPKSqOoqoGbztxjl4sCE7B_lT9etV";
 
-    // Firebase Configuration
+    // ⚠️ ATTTENTION: Agar naya project hai toh yahan apni exact naye project ki keys replace karein
     const firebaseConfig = {
         apiKey: "AIzaSyCnAObkRA9eYPw...",
         authDomain: "prince-primium.firebaseapp.com",
@@ -237,7 +235,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Tab Switcher Logic
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -254,7 +251,6 @@
             document.getElementById("main-system").style.display = "block";
             loadAllFactoryData();
             setupSecretAuditing();
-            alert("Welcome! Factory ERP Dashboard Active.");
         } else {
             alert("Galat Credentials!");
         }
@@ -265,22 +261,29 @@
         document.getElementById("main-system").style.display = "none";
     }
 
-    // 1. Save Raw Material
+    // Save Material Function (Fixed with immediate callback alert)
     function saveRawMaterial() {
         const name = document.getElementById("raw-name").value.trim();
         const qty = document.getElementById("raw-qty").value;
         const vendor = document.getElementById("raw-vendor").value.trim();
-        if(!name || !qty) return alert("Fill details");
+        
+        if(!name || !qty) return alert("Pehle poori details fill karein!");
 
-        db.ref('factory_erp/raw_material').push({ name, qty: parseInt(qty), vendor, timestamp: Date.now() })
+        db.ref('factory_erp/raw_material').push({
+            name: name,
+            qty: parseInt(qty),
+            vendor: vendor,
+            timestamp: Date.now()
+        })
         .then(() => {
+            alert("Material Added Successfully!");
             document.getElementById("raw-name").value = "";
             document.getElementById("raw-qty").value = "";
             document.getElementById("raw-vendor").value = "";
-        });
+        })
+        .catch(err => alert("Database Error: " + err.message));
     }
 
-    // 2. Save Production Stage
     function saveProduction() {
         const item = document.getElementById("prod-item").value.trim();
         const stage = document.getElementById("prod-stage").value;
@@ -289,12 +292,12 @@
 
         db.ref('factory_erp/production').push({ item, stage, qty: parseInt(qty), timestamp: Date.now() })
         .then(() => {
+            alert("Production Stage Updated!");
             document.getElementById("prod-item").value = "";
             document.getElementById("prod-qty").value = "";
         });
     }
 
-    // 3. Save Worker Khata
     function saveWorkerLog() {
         const name = document.getElementById("worker-name").value.trim();
         const task = document.getElementById("worker-task").value.trim();
@@ -304,13 +307,14 @@
 
         db.ref('factory_erp/workers').push({ name, task, pcs: parseInt(pcs), rate: parseFloat(rate), timestamp: Date.now() })
         .then(() => {
+            alert("Worker Ledger Logged!");
+            document.getElementById("worker-name").value = "";
             document.getElementById("worker-task").value = "";
             document.getElementById("worker-pcs").value = "";
             document.getElementById("worker-rate").value = "";
         });
     }
 
-    // 4. Save Client Order
     function saveClientOrder() {
         const client = document.getElementById("client-name").value.trim();
         const details = document.getElementById("order-details").value.trim();
@@ -319,69 +323,69 @@
 
         db.ref('factory_erp/orders').push({ client, details, date, timestamp: Date.now() })
         .then(() => {
+            alert("Order Booked!");
             document.getElementById("client-name").value = "";
             document.getElementById("order-details").value = "";
             document.getElementById("order-date").value = "";
         });
     }
 
-    // Load Data Globally
+    // Real-time Data Listeners
     function loadAllFactoryData() {
-        // Raw Material Loader
         db.ref('factory_erp/raw_material').on('value', snapshot => {
             const tbody = document.getElementById("raw-stock-rows");
             tbody.innerHTML = "";
-            if(snapshot.val()) {
-                Object.values(snapshot.val()).reverse().forEach(d => {
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
                     tbody.innerHTML += `<tr><td><strong>${d.name}</strong></td><td><span class="badge badge-raw">${d.qty} Units</span></td><td>${d.vendor || 'N/A'}</td></tr>`;
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#94a3b8;">No Material Stock Available</td></tr>`;
             }
         });
 
-        // Production Loader
         db.ref('factory_erp/production').on('value', snapshot => {
             const tbody = document.getElementById("production-rows");
             tbody.innerHTML = "";
-            if(snapshot.val()) {
-                Object.values(snapshot.val()).reverse().forEach(d => {
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
                     let bc = d.stage==='Cutting'?'badge-cutting':(d.stage==='Finished'?'badge-finished':'badge-stitching');
                     tbody.innerHTML += `<tr><td><strong>${d.item}</strong></td><td><span class="badge ${bc}">${d.stage}</span></td><td>${d.qty} Pcs</td></tr>`;
                 });
             }
         });
 
-        // Workers Khata Loader
         db.ref('factory_erp/workers').on('value', snapshot => {
             const tbody = document.getElementById("worker-rows");
             tbody.innerHTML = "";
-            if(snapshot.val()) {
-                Object.values(snapshot.val()).reverse().forEach(d => {
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
                     tbody.innerHTML += `<tr><td><strong>${d.name}</strong></td><td>${d.task}</td><td>${d.pcs}</td><td>₹${d.rate}</td><td><strong>₹${d.pcs * d.rate}</strong></td></tr>`;
                 });
             }
         });
 
-        // Orders Loader
         db.ref('factory_erp/orders').on('value', snapshot => {
             const tbody = document.getElementById("order-rows");
             tbody.innerHTML = "";
-            if(snapshot.val()) {
-                Object.values(snapshot.val()).reverse().forEach(d => {
+            const data = snapshot.val();
+            if(data) {
+                Object.values(data).reverse().forEach(d => {
                     tbody.innerHTML += `<tr><td><strong>${d.client}</strong></td><td>${d.details}</td><td>${d.date || 'No Date'}</td></tr>`;
                 });
             }
         });
     }
 
-    // 🔍 SECRET SECURITY AUDITING (Discord Auto-Alerts)
     function setupSecretAuditing() {
         const sections = ['raw_material', 'production', 'workers', 'orders'];
-        
         sections.forEach(sec => {
             let isInitial = true;
             db.ref(`factory_erp/${sec}`).limitToLast(1).on('child_added', snapshot => {
                 if(isInitial) { isInitial = false; return; }
-                
                 const data = snapshot.val();
                 let alertMsg = `🚨 **PRINCE FACTORY SECURITY ALERT** 🚨\n\n`;
                 
